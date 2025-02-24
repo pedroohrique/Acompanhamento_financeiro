@@ -24,7 +24,7 @@ class robo_coleta_dados:
             query = "SELECT TOP 1 ID_COLETA FROM TB_MENSAGENS_COLETADAS ORDER BY ID_COLETA DESC"
             cursor.execute(query)
         except (ValueError, TypeError) as e:
-            print(f"{e}")
+            messagebox.showerror("Erro ao verificar mensagens", f"{e}")
         
         retono_query = cursor.fetchone()
         connection.commit()
@@ -77,7 +77,8 @@ class robo_coleta_dados:
 
                     lista_mensagens_processadas.append(dados)
             except Exception as e:
-                print(f"Erro ao processar as mensagens: {e}")
+                messagebox.showerror("Erro ao processar mensagens", f"{e}")
+                
                 
             try:
                 data_reg = date.today()
@@ -136,7 +137,7 @@ class robo_coleta_dados:
                 connection.close() 
                            
             except Exception as e:
-                print(f"Erro ao inserir dados ao banco: {e}")    
+                messagebox.showerror("Erro", f"{e}")
         messagebox.showinfo("Atenção!",f"Última coleta realizada - Mensagem ID = {id_ultima_coleta}")  
         
 if __name__ == "__main__":
