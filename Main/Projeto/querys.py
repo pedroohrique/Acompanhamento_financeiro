@@ -59,7 +59,7 @@ def query_altera_itens_treeview(array_dados):
         cursor.close()
         connection.commit()
         connection.close()
-        messagebox.showinfo("Registro alterado com sucesso!")
+        messagebox.showinfo("Atenção!", f"Registro {array_dados[7]} alterado com sucesso")
     except Exception as e:
         messagebox.showerror("Error", f"Erro ao alterar o registro {e}")
         
@@ -215,7 +215,7 @@ def dados_grafico_aplicacaoFinanc() -> dict:
         ORDER BY
             CASE 
                 WHEN YEAR(DATA_APLICACAO) = ? AND MONTH(DATA_APLICACAO) = 1 THEN 2
-                ELSE 1 -- Prioriza os outros meses
+                ELSE 2 -- Prioriza os outros meses
             END,
             YEAR(DATA_APLICACAO) ASC,
             MONTH(DATA_APLICACAO) ASC;
@@ -255,14 +255,14 @@ def dados_grafico_gastoMensal() -> dict:
                     WHEN MES_DEBITO_PARCELA = 9 THEN 'Setembro'
                     WHEN MES_DEBITO_PARCELA = 10 THEN 'Outubro'
                     WHEN MES_DEBITO_PARCELA = 11 THEN 'Novembro'
-                    ELSE 'DEZ'
+                    ELSE 'Dezembro'
                 END AS 'MÊS',
                 SUM(VL_PARCELA) AS "Valor Gasto"
             FROM 
                 TB_HISTORICO_FINANC
             WHERE 
-                -- Converte ANO/MÊS em uma data válida
-                DATEFROMPARTS(ANO_DEBITO_PARCELA, MES_DEBITO_PARCELA, 1) BETWEEN 
+                --  Converte ANO/MÊS em uma data válida
+                    DATEFROMPARTS(ANO_DEBITO_PARCELA, MES_DEBITO_PARCELA, 1) BETWEEN 
                     DATEADD(MONTH, -6, CAST(GETDATE() AS DATE)) -- 6 meses atrás
                     AND EOMONTH(GETDATE()) -- Fim do mês atual
             GROUP BY
