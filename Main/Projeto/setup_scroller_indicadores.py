@@ -24,7 +24,7 @@ class indicadores:
         ano_atual = datetime.today().year
         qt_dias = calendar.monthrange(ano_atual, mes_atual)
         dias_restantes = (qt_dias[1] - dia_atual)
-        return dias_restantes
+        return dias_restantes if dias_restantes > 0 else 1
      
     def setup_indicadores(self):
         if not hasattr(self, 'container_indicadores'):
