@@ -37,7 +37,7 @@ class dashboard:
         ano_atual = datetime.today().year
         qt_dias = calendar.monthrange(ano_atual, mes_atual)
         dias_restantes = (qt_dias[1] - dia_atual)
-        return dias_restantes
+        return dias_restantes if dias_restantes > 0 else 1
 
 
     def obtem_valor_indicadores(self, valor_max) -> dict:
@@ -70,9 +70,9 @@ class dashboard:
         if frame == "VD" and valor_frame !=0:
                 porcentagem = (valor_frame / valor_max) * 100
                 cor = (
-                        "red" if porcentagem >= 75 else
+                        "lime" if porcentagem >= 75 else
                         "yellow" if porcentagem >= 50 else
-                        "lime"
+                        "red"
                 )
                 return cor
          
