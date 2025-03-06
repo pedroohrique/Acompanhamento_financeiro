@@ -244,30 +244,32 @@ def dados_grafico_gastoMensal() -> dict:
         query = """
             SELECT
                 CASE 
-                    WHEN MES_DEBITO_PARCELA = 1 THEN 'Janeiro'
-                    WHEN MES_DEBITO_PARCELA = 2 THEN 'Fevereiro'
-                    WHEN MES_DEBITO_PARCELA = 3 THEN 'Março'
-                    WHEN MES_DEBITO_PARCELA = 4 THEN 'Abril'
-                    WHEN MES_DEBITO_PARCELA = 5 THEN 'Maio'
-                    WHEN MES_DEBITO_PARCELA = 6 THEN 'Junho'
-                    WHEN MES_DEBITO_PARCELA = 7 THEN 'Julho'
-                    WHEN MES_DEBITO_PARCELA = 8 THEN 'Agosto'
-                    WHEN MES_DEBITO_PARCELA = 9 THEN 'Setembro'
-                    WHEN MES_DEBITO_PARCELA = 10 THEN 'Outubro'
-                    WHEN MES_DEBITO_PARCELA = 11 THEN 'Novembro'
+                    WHEN THF.MES_DEBITO_PARCELA = 1 THEN 'Janeiro'
+                    WHEN THF.MES_DEBITO_PARCELA = 2 THEN 'Fevereiro'
+                    WHEN THF.MES_DEBITO_PARCELA = 3 THEN 'Março'
+                    WHEN THF.MES_DEBITO_PARCELA = 4 THEN 'Abril'
+                    WHEN THF.MES_DEBITO_PARCELA = 5 THEN 'Maio'
+                    WHEN THF.MES_DEBITO_PARCELA = 6 THEN 'Junho'
+                    WHEN THF.MES_DEBITO_PARCELA = 7 THEN 'Julho'
+                    WHEN THF.MES_DEBITO_PARCELA = 8 THEN 'Agosto'
+                    WHEN THF.MES_DEBITO_PARCELA = 9 THEN 'Setembro'
+                    WHEN THF.MES_DEBITO_PARCELA = 10 THEN 'Outubro'
+                    WHEN THF.MES_DEBITO_PARCELA = 11 THEN 'Novembro'
                     ELSE 'Dezembro'
                 END AS 'MÊS',
-                SUM(VL_PARCELA) AS "Valor Gasto"
+                SUM(THF.VL_PARCELA) AS "Valor Gasto"
             FROM 
-                TB_HISTORICO_FINANC
+                TB_HISTORICO_FINANC THF
+				JOIN TB_REG_FINANC TRF ON THF.IDREGISTRO = TRF.ID_REGISTRO
             WHERE 
                 --  Converte ANO/MÊS em uma data válida
-                    DATEFROMPARTS(ANO_DEBITO_PARCELA, MES_DEBITO_PARCELA, 1) BETWEEN 
+                    DATEFROMPARTS(THF.ANO_DEBITO_PARCELA, THF.MES_DEBITO_PARCELA, 1) BETWEEN 
                     DATEADD(MONTH, -6, CAST(GETDATE() AS DATE)) -- 6 meses atrás
                     AND EOMONTH(GETDATE()) -- Fim do mês atual
+					AND TRF.IDCATEGORIA NOT IN (800,900)
             GROUP BY
-                MES_DEBITO_PARCELA,
-                ANO_DEBITO_PARCELA;
+                THF.MES_DEBITO_PARCELA,
+                THF.ANO_DEBITO_PARCELA;
         """
         cursor.execute(query)
         resultado_query = cursor.fetchall()
