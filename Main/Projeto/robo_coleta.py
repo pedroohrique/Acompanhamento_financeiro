@@ -17,8 +17,8 @@ class robo_coleta_dados:
         self.options.binary_location = r"C:\Program Files\chrome-win64\chrome.exe"
         self.options.add_argument(r"user-data-dir=C:\whatappcache")
         self.options.add_argument("--profile-directory=Default")
-        self.options.add_argument("--headless")
-        self.options.add_argument("--disable-gpu")
+        #self.options.add_argument("--headless")
+        #self.options.add_argument("--disable-gpu")
         self.driver = webdriver.Chrome(service=self.service, options=self.options)
         self.processa_mensagens()
         
@@ -86,12 +86,10 @@ class robo_coleta_dados:
                 try:
                     for mensagem_coletada in mensagens:
                         query_mensagens_coletadas(mensagem_coletada)
-                        log = self.configura_log("robo_coleta.py")
-                        log.info(f"Mensagem ID: {mensagem_coletada['ID mensagem']} inserida com sucesso!")
                 except Exception as e:
                     messagebox.showerror("Erro", "Erro ao registrar as mensagens, verifique o arquivo de LOG")
                     log = self.configura_log("robo_coleta.py")
-                    log.error(f"Erro ao registrar a mensagem: {e}")
+                    log.error(f"Erro ao registrar a mensagem! ID: '{mensagem_coletada['ID mensagem']}' - ERRO: {e}")
             else:
                 messagebox.showinfo("Atenção", "Não há mensagens a serem processadas!")
                 log = self.configura_log("robo_coleta.py")
@@ -120,8 +118,9 @@ class robo_coleta_dados:
                         'PIX': 400,
                         'SALDO DA CONTA': 500} 
         
-        for sublista in lista_mensagens:
-            try:
+        
+        try:
+            for sublista in lista_mensagens:            
                 if len(sublista) == 9 and int(sublista[0]) > self.verifica_ultima_coleta():
                     dados = {
                         'ID mensagem': int(sublista[0].strip()),
@@ -135,13 +134,11 @@ class robo_coleta_dados:
                         'Categoria': categoria_map.get(sublista[8].strip().upper())  
                     }
                     lista_mensagens_processadas.append(dados)
-                    
-            except Exception as e:
-                messagebox.showerror("Erro ao processar mensagens, verifique o arquivo de LOG.")
-                log = self.configura_log("robo_coleta.py")
-                log.error(f"Falha ao processar as mensagens recebidas: {e}")
+            registra_mensagens(mensagens=lista_mensagens_processadas)        
+        except Exception as e:
+            messagebox.showerror("Erro ao processar mensagens, verifique o arquivo de LOG.")
+            log = self.configura_log("robo_coleta.py")
+            log.error(f"Falha ao processar as mensagens recebidas: {e}")
                    
-        registra_mensagens(mensagens=lista_mensagens_processadas)
-          
 if __name__ == "__main__":
     app = robo_coleta_dados()
