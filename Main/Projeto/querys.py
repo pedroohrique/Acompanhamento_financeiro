@@ -4,6 +4,20 @@ from database import database_connection
 from datetime import datetime
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
+import logging
+
+
+def configura_log(logger_name):
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.DEBUG)
+        file_handler = logging.FileHandler(
+            r"C:\Users\Pedro Henrique\Documents\Acompanhamento_financeiro\Main\Projeto\logs\log_aplicacao.txt"
+        )
+        file_handler.setLevel(logging.DEBUG) 
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        return logger
 
 def query_obtem_categorias() -> dict:
     try:
@@ -288,3 +302,45 @@ def dados_grafico_gastoMensal() -> dict:
         return dados
     except Exception as e:
             messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
+            
+def query_mensagens_coletadas(dicionario):
+    
+    query_tb_mensagens_coletadas = "INSERT INTO TB_MENSAGENS_COLETADAS (ID_COLETA, DATA_COLETA, DATA_GASTO, DESCRICAO) VALUES (?, GETDATE(), ?, ?)"
+    query_tb_reg_financ = "INSERT INTO TB_REG_FINANC (DATA_REGISTRO, DATA_GASTO, VALOR, DESCRICAO, LOCAL_GASTO, PARCELAMENTO, N_PARCELAS, IDCATEGORIA, IDFORMA_PAGAMENTO) VALUES (GETDATE(), ?, ?, ?, ?, ?, ?, ?, ?)"
+    
+    try:
+        connection, cursor = database_connection()
+        cursor.execute(
+                query_tb_mensagens_coletadas,
+                (dicionario['ID mensagem'], dicionario['Data compra'], dicionario['Desc'])
+        )
+        
+        if cursor.rowcount > 0:
+            pass
+        else:
+            log = configura_log("querys.py")
+            log.error(f"Falha ao inserir na TB_MENSAGENS_COLETADAS, ID: {dicionario['ID mensagem']}")
+                   
+        cursor.execute(
+            query_tb_reg_financ,
+            (dicionario['Data compra'], dicionario['Valor'], dicionario['Desc'], dicionario['Local'], dicionario['Parcelamento'], dicionario['QTD'], dicionario['Categoria'],
+            dicionario['Forma'])
+        )
+        
+        if cursor.rowcount > 0:
+            log = configura_log("querys.py")
+            log.info(f"Mensagem coletada com sucesso! ID: {dicionario['ID mensagem']}")
+        else:
+            log = configura_log("querys.py")
+            log.error(f"Falha ao inserir na TB_REG_FINANC, ID: {dicionario['ID mensagem']}")
+         
+        connection.commit()
+
+    except Exception as e:
+        messagebox.showerror("Erro", "Falha ao inserir a mensagem no banco de dados, verifique o arquivo de LOG")
+        log = configura_log("querys.py")
+        log.error(f"Falha ao inserir a mensagem no banco de dados: {e}")
+    
+    finally:
+        cursor.close()
+        connection.close()
