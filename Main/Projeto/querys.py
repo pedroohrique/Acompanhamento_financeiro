@@ -7,14 +7,14 @@ from dateutil.relativedelta import relativedelta
 import logging
 
 
-def configura_log(logger_name):
+def configura_log(self, logger_name):
         logger = logging.getLogger(logger_name)
         logger.setLevel(logging.DEBUG)
         file_handler = logging.FileHandler(
             r"C:\Users\Pedro Henrique\Documents\Acompanhamento_financeiro\Main\Projeto\logs\log_aplicacao.txt"
         )
         file_handler.setLevel(logging.DEBUG) 
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s / %(levelname)s / %(name)s / %(funcName)s / %(message)s / line: %(lineno)d')
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
         return logger
@@ -25,17 +25,16 @@ def query_obtem_categorias() -> dict:
         query = "SELECT ID_CATEGORIA, DESCRICAO FROM TB_CATEGORIA"
         cursor.execute(query)
         retorno_query = cursor.fetchall()
-        
         categorias = {linha[1]:linha[0] for linha in retorno_query}
-        
-        cursor.close()
-        connection.commit()
-        connection.close()
-        
+        connection.commit()  
         return categorias
         
     except Exception as e:
-        print("Erro", f"Ocorreu um erro: {e}")
+        log = configura_log("querys.py")
+        log.error(f"Erro ao executar a query: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
 def query_obtem_forma_pagamento() -> dict:
     try:
@@ -43,17 +42,16 @@ def query_obtem_forma_pagamento() -> dict:
         query = "SELECT ID_FORMA, DESCRICAO FROM TB_FORMA_PAGAMENTO"
         cursor.execute(query)
         retorno_query = cursor.fetchall()
-        
         formas = {linha[1]:linha[0] for linha in retorno_query}
-        
-        cursor.close()
         connection.commit()
-        connection.close()
-        
         return formas
         
     except Exception as e:
-        print("Erro", f"Ocorreu um erro: {e}")
+        log = configura_log("querys.py")
+        log.error(f"Falha ao executar a query: {e}")
+    finally:
+        cursor.close()
+        connection.close()
         
 def query_altera_itens_treeview(array_dados):
     try:
@@ -70,12 +68,15 @@ def query_altera_itens_treeview(array_dados):
                 WHERE ID_REGISTRO = ?
                 """
         cursor.execute(query, array_dados,)
-        cursor.close()
         connection.commit()
-        connection.close()
         messagebox.showinfo("Atenção!", f"Registro {array_dados[7]} alterado com sucesso")
     except Exception as e:
-        messagebox.showerror("Error", f"Erro ao alterar o registro {e}")
+        messagebox.showerror("Error", f"Erro ao alterar o registro: {e}")
+        log = configura_log("querys.py")
+        log.error(f"Erro ao alterar o registro: {e}") 
+    finally:
+        cursor.close()
+        connection.close()
         
 def query_deleta_item_treeview(id_registro):
     query = "DELETE FROM TB_REG_FINANC WHERE ID_REGISTRO = ?"
@@ -83,12 +84,15 @@ def query_deleta_item_treeview(id_registro):
     try:
         connection, cursor = database_connection()
         cursor.execute(query, id_registro)
-        cursor.close()
         connection.commit()
-        connection.close()
         messagebox.showinfo("Atenção", f"Registro {id_registro} excluído com sucesso!")
     except Exception as e:
-        print("Erro", f"Ocorreu um erro: {e}")
+        messagebox.showerror("Error", f"Falha ao excluir o item da Treeview: {e}")
+        log = configura_log("querys.py")
+        log.error(f"Falha ao excluir o item da Treeview: {e}")       
+    finally:
+        cursor.close()
+        connection.close()
         
 def obtem_valores(tipo_query) -> Decimal:
         dict_query = {
@@ -130,17 +134,18 @@ def obtem_valores(tipo_query) -> Decimal:
             mes_atual = datetime.today().month
             ano_atual = datetime.today().year
             query = dict_query.get(tipo_query.upper())
-            
             cursor.execute(query, (mes_atual, ano_atual))
             valor_query = cursor.fetchone()
-            cursor.close()
             connection.commit()
-            connection.close()
             return valor_query[0] if valor_query and valor_query[0] is not None else 0.0
             
         except Exception as e:
-            print(f"Erro ao obter os valores requisitados: {e}")
+            log = configura_log("querys.py")
+            log.error(f"Falha ao executar a query: {e}")       
             return 0.0
+        finally:
+            cursor.close()
+            connection.close()
         
         
 def gasto_por_categoria():
@@ -153,7 +158,6 @@ def gasto_por_categoria():
         try:
             # Estabelecendo conexão explicitamente
             connection, cursor = database_connection()
-
             for id_categoria in categorias_map:
                 query = """
                     SELECT
@@ -171,39 +175,41 @@ def gasto_por_categoria():
 
                 registro_gastos_categoria[id_categoria] = retorno_query[0] if retorno_query and retorno_query[0] is not None else Decimal(0)
 
-            # Fechar conexão corretamente
             connection.commit()
-            cursor.close()
-            connection.close()
 
             return registro_gastos_categoria
         except Exception as e:
-            print(f"Erro ao obter gastos por categoria: {e}")
-            return None
-        
-def obtem_aplicacao_financ() -> Decimal:
-        try:
-            connection, cursor = database_connection()
-            query = """
-               SELECT TOP 1 
-               FORMAT(SALDO_ATUAL, 'N2', 'pt-BR')
-               FROM TB_APLICACAO_FINANC
-               ORDER BY ID_APLICACAO DESC
-            """
-            cursor.execute(query)
-            retorno_query = cursor.fetchone()
-            connection.commit()
+            log = configura_log("querys.py")
+            log.error(f"Falha ao executar a query: {e}")       
+            return 0.0
+        finally:
             cursor.close()
             connection.close()
-            return retorno_query[0] if retorno_query and retorno_query[0] is not None else 0.0
-           
-        except Exception as e:
-            print(f"Erro ao obter os valores aplicados")
-            return Decimal(0)
         
-def dados_grafico_aplicacaoFinanc() -> dict:
-        meses = []
-        valores = []
+def obtem_aplicacao_financ() -> Decimal:
+    try:
+        connection, cursor = database_connection()
+        query = """
+            SELECT TOP 1 
+            FORMAT(SALDO_ATUAL, 'N2', 'pt-BR')
+            FROM TB_APLICACAO_FINANC
+            ORDER BY ID_APLICACAO DESC
+        """
+        cursor.execute(query)
+        retorno_query = cursor.fetchone()
+        connection.commit()
+        return retorno_query[0] if retorno_query and retorno_query[0] is not None else 0.0
+    except Exception as e:
+        log = configura_log("querys.py")
+        log.error(f"Falha ao executar a query: {e}")       
+    finally:
+        cursor.close()
+        connection.close()
+        
+def dados_grafico_aplicacaoFinanc() -> dict:  
+    meses = []
+    valores = []
+    try:
         connection, cursor = database_connection()
         query = """
             SELECT
@@ -238,8 +244,6 @@ def dados_grafico_aplicacaoFinanc() -> dict:
         resultado = cursor.fetchall()
         
         connection.commit()
-        cursor.close()
-        connection.close()
         
         for tupla in resultado:
             meses.append(tupla[0])
@@ -247,8 +251,14 @@ def dados_grafico_aplicacaoFinanc() -> dict:
         
         dados = {"Mês":meses,
                  "Valores":valores}
-        
         return dados
+    
+    except Exception as e:
+        log = configura_log("querys.py")
+        log.error(f"Falha ao executar a query: {e}")       
+    finally:
+        cursor.close()
+        connection.close()
      
 def dados_grafico_gastoMensal() -> dict:
     try:
@@ -288,8 +298,6 @@ def dados_grafico_gastoMensal() -> dict:
         cursor.execute(query)
         resultado_query = cursor.fetchall()
         connection.commit()
-        cursor.close()
-        connection.close()
         
         for tupla in resultado_query:
             meses.append(tupla[0])
@@ -302,7 +310,12 @@ def dados_grafico_gastoMensal() -> dict:
         return dados
     except Exception as e:
             messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
-            
+            log = configura_log("querys.py")
+            log.error(f"Falha ao executar a query: {e}")       
+    finally:
+        cursor.close()
+        connection.close()
+        
 def query_mensagens_coletadas(dicionario):
     
     query_tb_mensagens_coletadas = "INSERT INTO TB_MENSAGENS_COLETADAS (ID_COLETA, DATA_COLETA, DATA_GASTO, DESCRICAO) VALUES (?, GETDATE(), ?, ?)"
