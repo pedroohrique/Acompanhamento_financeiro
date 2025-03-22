@@ -7,7 +7,7 @@ from database import database_connection
 from datetime import datetime
 from tkinter import messagebox
 from querys import query_mensagens_coletadas
-import logging
+from logger import configura_log
 import pyautogui as tempo_carregamento
 
 class robo_coleta_dados:
@@ -21,18 +21,6 @@ class robo_coleta_dados:
         #self.options.add_argument("--disable-gpu")
         self.driver = webdriver.Chrome(service=self.service, options=self.options)
         self.processa_mensagens()
-        
-    def configura_log(self, logger_name):
-        logger = logging.getLogger(logger_name)
-        logger.setLevel(logging.DEBUG)
-        file_handler = logging.FileHandler(
-            r"C:\Users\Pedro Henrique\Documents\Acompanhamento_financeiro\Main\Projeto\logs\log_aplicacao.txt"
-        )
-        file_handler.setLevel(logging.DEBUG) 
-        formatter = logging.Formatter('%(asctime)s / %(levelname)s / %(name)s / %(funcName)s / %(message)s / line: %(lineno)d')
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-        return logger
             
     def verifica_ultima_coleta(self):
         connection, cursor = database_connection()           
@@ -44,7 +32,7 @@ class robo_coleta_dados:
             
         except (ValueError, TypeError) as e:
             messagebox.showerror("Erro ao verificar a última coleta, verifique o arquivo de LOG")   
-            log = self.configura_log("robo_coleta.py")
+            log = configura_log("robo_coleta.py")
             log.error(f"Erro ao verificar a última mensagem: {e}")
         
         connection.commit()
@@ -72,7 +60,7 @@ class robo_coleta_dados:
             
         except Exception as e:
             messagebox.showerror("ERROR", "Erro ao coletar dados da Web, verifique o arquivo de LOG.")
-            log = self.configura_log("robo_coleta.py")
+            log = configura_log("robo_coleta.py")
             log.error(f"Erro ao localizar o elemento: {e}")
         finally:
             self.driver.quit()
@@ -80,19 +68,20 @@ class robo_coleta_dados:
 
     def processa_mensagens(self):        
         def registra_mensagens(mensagens):
-            id_mensagens_pendentes = [mensagem['ID mensagem'] for mensagem in mensagens if int(mensagem['ID mensagem']) > self.verifica_ultima_coleta()]
+            id_mensagens_pendentes = [mensagem['ID mensagem'] for mensagem in mensagens]
             
             if len(id_mensagens_pendentes) > 0:                
                 try:
                     for mensagem_coletada in mensagens:
                         query_mensagens_coletadas(mensagem_coletada)
+                    messagebox.showinfo("Atenção", "Coleta concluída com sucesso!")
                 except Exception as e:
                     messagebox.showerror("Erro", "Erro ao registrar as mensagens, verifique o arquivo de LOG")
-                    log = self.configura_log("robo_coleta.py")
+                    log = configura_log("robo_coleta.py")
                     log.error(f"Erro ao registrar a mensagem! ID: '{mensagem_coletada['ID mensagem']}' - ERRO: {e}")
             else:
                 messagebox.showinfo("Atenção", "Não há mensagens a serem processadas!")
-                log = self.configura_log("robo_coleta.py")
+                log = configura_log("robo_coleta.py")
                 log.info(f"Não há mensagens a serem processadas - Última mensagem ID: {self.verifica_ultima_coleta()}")
                 
         
@@ -117,8 +106,7 @@ class robo_coleta_dados:
                         'DINHEIRO': 300,
                         'PIX': 400,
                         'SALDO DA CONTA': 500} 
-        
-        
+             
         try:
             for sublista in lista_mensagens:            
                 if len(sublista) == 9 and int(sublista[0]) > self.verifica_ultima_coleta():
@@ -136,8 +124,8 @@ class robo_coleta_dados:
                     lista_mensagens_processadas.append(dados)
             registra_mensagens(mensagens=lista_mensagens_processadas)        
         except Exception as e:
-            messagebox.showerror("Erro ao processar mensagens, verifique o arquivo de LOG.")
-            log = self.configura_log("robo_coleta.py")
+            messagebox.showerror("Erro", "Erro ao processar mensagens, verifique o arquivo de LOG.")
+            log = configura_log("robo_coleta.py")
             log.error(f"Falha ao processar as mensagens recebidas: {e}")
                    
 if __name__ == "__main__":
