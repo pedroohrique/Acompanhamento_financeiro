@@ -1,5 +1,5 @@
 import pyodbc
-
+from logger import configura_log
 
 def database_connection():
     server = 'DESKTOP-98I4FGO'
@@ -10,10 +10,10 @@ def database_connection():
     try:
         connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + user + ';PWD=' + password)
         cursor = connection.cursor()
-        print('Conexão estabelecida com sucesso!')
         return connection, cursor
 
     except pyodbc.Error as e:
-        print('Erro ao se conectar com o banco de dados:', e)
+        log = configura_log("database.py")
+        log.error(f"Falha ao conectar ao banco de dados local: {e}")
         return None
 
