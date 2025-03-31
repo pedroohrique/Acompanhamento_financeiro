@@ -74,7 +74,7 @@ class robo_coleta_dados:
                 try:
                     for mensagem_coletada in mensagens:
                         query_mensagens_coletadas(mensagem_coletada)
-                    messagebox.showinfo("Atenção", "Coleta concluída com sucesso!")
+                    messagebox.showinfo("Atenção", "Coleta concluída!")
                 except Exception as e:
                     messagebox.showerror("Erro", "Erro ao registrar as mensagens, verifique o arquivo de LOG")
                     log = configura_log("robo_coleta.py")
@@ -93,7 +93,7 @@ class robo_coleta_dados:
                         'MORADIA': 200,
                         'TRANSPORTE': 300,
                         'SAÚDE': 400,
-                        'LAZER E ENTRETERIMENTO': 500,
+                        'LAZER E ENTRETENIMENTO': 500,
                         'COMPRAS': 600,
                         'GASTOS OCASIONAIS': 700,
                         'INVESTIMENTOS E APLICAÇÕES': 800,
@@ -105,8 +105,7 @@ class robo_coleta_dados:
                         'CARTÃO DE DÉBITO': 200,
                         'DINHEIRO': 300,
                         'PIX': 400,
-                        'SALDO DA CONTA': 500} 
-             
+                        'SALDO DA CONTA': 500}        
         try:
             for sublista in lista_mensagens:            
                 if len(sublista) == 9 and int(sublista[0]) > self.verifica_ultima_coleta():
